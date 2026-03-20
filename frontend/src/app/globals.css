@@ -1,0 +1,145 @@
+:root {
+  --bg: #0b1020;
+  --panel: rgba(18, 26, 51, 0.92);
+  --text: #e7ecff;
+  --muted: #aab3d6;
+  --border: rgba(255, 255, 255, 0.12);
+  --accent: #7aa2ff;
+  --hl-bg: rgba(122, 162, 255, 0.22);
+  --hl-border: rgba(122, 162, 255, 0.55);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial;
+  background: radial-gradient(
+      1200px 600px at 10% 0%,
+      rgba(122, 162, 255, 0.18),
+      transparent
+    ),
+    var(--bg);
+  color: var(--text);
+}
+
+.container {
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 24px;
+}
+
+.header {
+  margin-bottom: 18px;
+}
+
+.subtitle {
+  margin: 8px 0 0 0;
+  color: var(--muted);
+}
+
+.panel {
+  background: var(--panel);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 18px;
+  margin-bottom: 16px;
+}
+
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.label {
+  color: var(--muted);
+  font-size: 0.9rem;
+}
+
+textarea,
+select {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+}
+
+.button {
+  border: 1px solid var(--border);
+  background: rgba(122, 162, 255, 0.15);
+  color: var(--text);
+  padding: 10px 14px;
+  border-radius: 10px;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.status {
+  color: var(--muted);
+  margin-bottom: 12px;
+  min-height: 20px;
+}
+
+.empty {
+  color: var(--muted);
+  margin: 10px 0 0 0;
+}
+
+.items {
+  display: grid;
+  gap: 12px;
+}
+
+.card {
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 12px;
+  padding: 14px;
+  cursor: pointer;
+}
+
+.card h3 {
+  margin: 0 0 6px 0;
+}
+
+.definition {
+  margin: 0 0 8px 0;
+  color: var(--muted);
+}
+
+.examples {
+  margin: 0;
+  padding-left: 18px;
+  color: var(--muted);
+}
+
+.score {
+  margin: 8px 0 0 0;
+  color: var(--muted);
+}
+
+.preview {
+  white-space: pre-wrap;
+  word-wrap: break-word;
+  line-height: 1.6;
+}
+
+.hl {
+  background: var(--hl-bg);
+  border: 1px solid var(--hl-border);
+  padding: 0 2px;
+  border-radius: 6px;
+}
+
+.details p {
+  margin: 6px 0;
+  color: var(--muted);
+}
+
