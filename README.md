@@ -5,13 +5,14 @@ Paste an English text, choose a CEFR level, and the app extracts words/expressio
 ## MVP status (current repo)
 
 - Frontend + backend API contract are wired.
-- Extraction logic is stubbed for now: `POST /api/extract` returns `highlights: []` and `items: []`.
+- `POST /api/extract` calls a **local Ollama** model (`format: json`) with the user text and CEFR level, then parses the JSON into `highlights` and `items`.
+- Requires [Ollama](https://ollama.com) running (default `http://localhost:11434`) and a pulled model (see env vars below).
 
 ## Stack
 
 - Frontend: Next.js (React + TypeScript) in `frontend/`
-- Backend/API: FastAPI in `backend/` (`backend/main.py`)
-- Future: Python modules for candidate generation + CEFR ranking + optional LLM enrichment
+- Backend/API: FastAPI in `backend/` (`backend/main.py`, `backend/llm_extract.py`)
+- LLM: local Ollama HTTP API (`httpx`)
 
 ## Run locally
 
@@ -42,15 +43,24 @@ make run-frontend
 make dev
 ```
 
+This runs `ollama serve` in the background if Ollama is not already reachable on `http://127.0.0.1:11434`, then starts the API and Next.js in parallel (`make -j2`). Override the check URL with `make dev OLLAMA_URL=http://host:11434` if needed.
+
 Frontend API base URL: `NEXT_PUBLIC_API_BASE_URL` (defaults to `http://localhost:8000`).
+
+### Ollama (backend)
+
+| Variable | Default | Meaning |
+| --- | --- | --- |
+| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server base URL |
+| `OLLAMA_MODEL` | `llama3.2` | Model name (`ollama pull <name>`) |
+
+Example: `OLLAMA_MODEL=mistral ollama pull mistral` then run the backend.
 
 ## Implementation (high level)
 
-The `extract` route is intended to:
-
-1. Generate candidates from `req.text` (single words + multi-word expressions) and record each occurrence as character offsets `{start,end}`.
-2. Score/rank candidates for `req.level` and return a sorted `items[]` list.
-3. (Optional) Enrich top-N items with English-only `definition`, `examples`, and `whyThisMatches`.
+1. Build a system + user prompt with the exact text and requested CEFR level.
+2. `POST` to Ollama `/api/chat` with `format: json`.
+3. Parse assistant `content` as JSON and validate with `ExtractResponse` (`backend/schemas.py`). The server forces `level` from the request.
 
 The frontend renders:
 
@@ -87,32 +97,12 @@ The frontend renders:
 }
 ```
 
-Current stub response:
-
-`{ "level": <requested>, "highlights": [], "items": [] }`
+If Ollama is down or the model returns invalid JSON, the API responds with `503` or `502` and an error `detail`.
 
 Types live in `backend/schemas.py`.
 
-## Ideas for implementing `extract` (backend/main.py)
-
-Pseudocode outline:
-
-- Validate `ExtractRequest` (`text`, `level`)
-- Candidate generation:
-  - tokenize + lemmatize
-  - generate n-grams/collocations
-  - collect occurrences with `{start,end}` offsets
-- CEFR scoring:
-  - compute features (frequency/basicness proxy, complexity, lemma/morph fit, context fit)
-  - convert to `levelScore` (and optionally `levelProbabilities`)
-- Response shaping:
-  - group occurrences into `highlights[]`
-  - build ranked `items[]` (1 entry per canonical term/phrase)
-- (Optional) top-N enrichment:
-  - fill `definition`, `examples`, `whyThisMatches` (English-only)
-
 ## Key files
 
-- `backend/main.py`, `backend/schemas.py`
+- `backend/main.py`, `backend/llm_extract.py`, `backend/schemas.py`
 - `frontend/src/app/page.tsx`
 - `Makefile`

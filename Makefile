@@ -4,15 +4,18 @@ VENV_DIR := .venv
 PY := $(VENV_DIR)/bin/python
 UVICORN := $(VENV_DIR)/bin/uvicorn
 
-.PHONY: help install-backend run-backend install-frontend run-frontend dev clean
+OLLAMA_URL ?= http://127.0.0.1:11434
+
+.PHONY: help install-backend run-backend install-frontend run-frontend run-ollama dev clean
 
 help:
 	@echo "Common targets:"
 	@echo "  make install-backend   # create venv + install backend deps"
-	@echo "  make run-backend       # start FastAPI (also serves frontend at /)"
+	@echo "  make run-backend       # start FastAPI on :8000"
 	@echo "  make install-frontend  # npm install in frontend/"
 	@echo "  make run-frontend      # start Next.js dev server (port 3000)"
-	@echo "  make dev               # run backend + frontend (in background)"
+	@echo "  make run-ollama        # start Ollama server if not already up (:11434)"
+	@echo "  make dev               # ensure Ollama, then run backend + frontend (parallel)"
 	@echo "  make clean             # remove venv + frontend build artifacts"
 
 install-backend:
@@ -29,7 +32,19 @@ install-frontend:
 run-frontend: install-frontend
 	@cd frontend && npm run dev
 
-dev: run-backend run-frontend
+# Start Ollama only if nothing is listening on the API port (avoids duplicate servers).
+run-ollama:
+	@command -v ollama >/dev/null || { echo "ollama: not found. Install from https://ollama.com" >&2; exit 1; }
+	@curl -sf "$(OLLAMA_URL)/api/tags" >/dev/null 2>&1 && { echo "Ollama already running at $(OLLAMA_URL)"; exit 0; }; \
+	echo "Starting Ollama (ollama serve) in the background..."; \
+	ollama serve & \
+	sleep 2; \
+	curl -sf "$(OLLAMA_URL)/api/tags" >/dev/null 2>&1 || { echo "Ollama did not become ready. Run: ollama serve" >&2; exit 1; }; \
+	echo "Ollama is up."
+
+dev: install-backend install-frontend run-ollama
+	@echo "Starting backend (:8000) and frontend (:3000)..."
+	@$(MAKE) -j2 run-backend run-frontend
 
 clean:
 	@rm -rf $(VENV_DIR)
