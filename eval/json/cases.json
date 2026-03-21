@@ -1,0 +1,24 @@
+{
+  "cases": [
+    {
+      "id": "minimal-a1",
+      "level": "A1",
+      "text": "The cat sits on the mat. It is small."
+    },
+    {
+      "id": "hoody-story-a1",
+      "level": "A1",
+      "text": "One Monday afternoon, Mike, adopting a very unusual style, wore a hoody. Nobody would ever think of wearing a hoody on a very hot day. His friends also wondered why he was being weird."
+    },
+    {
+      "id": "hoody-story-b1",
+      "level": "B1",
+      "text": "One Monday afternoon, Mike, adopting a very unusual style, wore a hoody. Nobody would ever think of wearing a hoody on a very hot day. His friends also wondered why he was being weird. They became a little aloof with Mike that day."
+    },
+    {
+      "id": "dialogue-b2",
+      "level": "B2",
+      "text": "—Are you finally done with your hoody fashion?\n—What hoody fashion?\n—Last week, everyday, you kept on wearing a hoody."
+    }
+  ]
+}

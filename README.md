@@ -56,6 +56,17 @@ Frontend API base URL: `NEXT_PUBLIC_API_BASE_URL` (defaults to `http://localhost
 
 Example: `OLLAMA_MODEL=mistral ollama pull mistral` then run the backend.
 
+## Eval (saved API responses)
+
+With the backend up, batch-run fixture texts and save JSON for manual review (prompt/model comparison):
+
+```bash
+make eval
+# or: python eval/run_eval.py
+```
+
+Fixtures: `eval/json/cases.json`. Outputs: `eval/runs/<timestamp>/` (gitignored). See [`eval/README.md`](eval/README.md).
+
 ## Implementation (high level)
 
 1. Build a system + user prompt with the exact text and requested CEFR level.
@@ -106,3 +117,4 @@ Types live in `backend/schemas.py`.
 - `backend/main.py`, `backend/llm_extract.py`, `backend/schemas.py`
 - `frontend/src/app/page.tsx`
 - `Makefile`
+- `eval/run_eval.py`, `eval/json/cases.json`

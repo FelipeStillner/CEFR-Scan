@@ -6,7 +6,7 @@ UVICORN := $(VENV_DIR)/bin/uvicorn
 
 OLLAMA_URL ?= http://127.0.0.1:11434
 
-.PHONY: help install-backend run-backend install-frontend run-frontend run-ollama dev clean
+.PHONY: help install-backend run-backend install-frontend run-frontend run-ollama dev eval clean
 
 help:
 	@echo "Common targets:"
@@ -16,6 +16,7 @@ help:
 	@echo "  make run-frontend      # start Next.js dev server (port 3000)"
 	@echo "  make run-ollama        # start Ollama server if not already up (:11434)"
 	@echo "  make dev               # ensure Ollama, then run backend + frontend (parallel)"
+	@echo "  make eval              # run eval fixtures; save responses under eval/runs/"
 	@echo "  make clean             # remove venv + frontend build artifacts"
 
 install-backend:
@@ -45,6 +46,9 @@ run-ollama:
 dev: install-backend install-frontend run-ollama
 	@echo "Starting backend (:8000) and frontend (:3000)..."
 	@$(MAKE) -j2 run-backend run-frontend
+
+eval:
+	@python3 eval/run_eval.py
 
 clean:
 	@rm -rf $(VENV_DIR)
