@@ -31,22 +31,19 @@ Your task: identify words, expressions, and short phrases in the text that are u
 
 You MUST respond with a single JSON object only. No markdown fences, no commentary before or after.
 
-The JSON must have exactly these keys:
-- "level": string, same as the requested CEFR level
-- "highlights": array of objects, each with "term" (string) and "occurrences" (array of {"start": int, "end": int})
-- "items": array of objects with at least "term" (string). Optional string fields (use a real string or omit the key; never use true/false for text): "canonical", "kind", "definition", "whyThisMatches". Optional: "levelScore" (number 0-1), "levelProbabilities" (object), "examples" (array of strings)
+The JSON must be:
+{
+  "vocabulary": [
+    {"term": "string"}
+  ]
+}
 
-Rules for highlights:
-- "start" and "end" are 0-based character indices into the EXACT original user text (Unicode code points / Python string indices).
-- "end" is exclusive (substring = text[start:end]).
-- Every occurrence of a chosen term in the text should appear in "occurrences" if you list that term in highlights.
-- Do not invent spans that do not match the text literally.
-
-Rules for items:
-- Each item should correspond to a term you highlight; use the same "term" string.
-- Keep the list reasonably small (e.g. at most 25 items) for long texts.
-
-If the text is empty of good matches, return empty arrays for highlights and items."""
+Rules:
+- Return ONLY the key "vocabulary".
+- Each vocabulary element must contain ONLY one key: "term" (string).
+- Do not return booleans/numbers for "term".
+- Keep the list reasonably small (at most ~25 terms for long texts).
+- If there are no good matches, return {"vocabulary": []}."""
 
     user = f"""CEFR level: {req.level}
 
@@ -120,6 +117,5 @@ def extract_via_ollama(req: ExtractRequest) -> ExtractResponse:
     messages = _build_messages(req)
     raw = call_ollama_chat(messages)
     data = _parse_json_object(raw)
-    data["level"] = req.level
     data = sanitize_payload(data)
     return ExtractResponse.model_validate(data)

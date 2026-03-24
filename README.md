@@ -5,7 +5,7 @@ Paste an English text, choose a CEFR level, and the app extracts words/expressio
 ## MVP status (current repo)
 
 - Frontend + backend API contract are wired.
-- `POST /api/extract` calls a **local Ollama** model (`format: json`) with the user text and CEFR level, then parses the JSON into `highlights` and `items`.
+- `POST /api/extract` calls a **local Ollama** model (`format: json`) with the user text and CEFR level, then parses the JSON into `vocabulary`.
 - Requires [Ollama](https://ollama.com) running (default `http://localhost:11434`) and a pulled model (see env vars below).
 
 ## Stack
@@ -71,12 +71,9 @@ Fixtures: `eval/json/cases.json`. Outputs: `eval/runs/<timestamp>/` (gitignored)
 
 1. Build a system + user prompt with the exact text and requested CEFR level.
 2. `POST` to Ollama `/api/chat` with `format: json`.
-3. Parse assistant `content` as JSON and validate with `ExtractResponse` (`backend/schemas.py`). The server forces `level` from the request.
+3. Parse assistant `content` as JSON and validate with `ExtractResponse` (`backend/schemas.py`).
 
-The frontend renders:
-
-- Highlights from `highlights[].occurrences[]` (offsets into the original text).
-- Cards from `items[]`, including the optional explanation fields.
+The frontend renders vocabulary cards from `vocabulary[]`.
 
 ## API contract: `POST /api/extract`
 
@@ -90,21 +87,7 @@ The frontend renders:
 
 ```json
 {
-  "level": "B1",
-  "highlights": [
-    { "term": "however", "occurrences": [{ "start": 0, "end": 7 }] }
-  ],
-  "items": [
-    {
-      "term": "however",
-      "canonical": "however",
-      "kind": "adverb",
-      "levelScore": 0.81,
-      "definition": "used to show contrast between two statements",
-      "examples": ["I wanted to go out; however, it started raining."],
-      "whyThisMatches": "..."
-    }
-  ]
+  "vocabulary": [{ "term": "however" }, { "term": "vacation" }]
 }
 ```
 
