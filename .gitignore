@@ -3,3 +3,4 @@
 frontend/.next/
 **/.npm-cache/
 eval/runs/
+**/*.sqlite
