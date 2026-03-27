@@ -1,6 +1,8 @@
+from __future__ import annotations
+
 from typing import List, Literal
 
-from pydantic import BaseModel, Field, field_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 ENGLISH_LEVEL = Literal["Beginner", "Intermediary", "Advanced"]
@@ -49,3 +51,33 @@ class TranslateRequest(BaseModel):
 
 class TranslateResponse(BaseModel):
     translated_text: str
+
+
+class QuizRequest(BaseModel):
+    text: str = Field(..., min_length=1)
+    vocabulary: List[str] = Field(..., min_length=1, max_length=100)
+
+    @field_validator("vocabulary")
+    @classmethod
+    def nonempty_vocab(cls, v: List[str]) -> List[str]:
+        out = [t.strip() for t in v if isinstance(t, str) and t.strip()]
+        if not out:
+            raise ValueError("At least one non-empty vocabulary term is required")
+        return out
+
+
+class QuizQuestion(BaseModel):
+    term: str
+    prompt: str
+    options: List[str] = Field(..., min_length=1)
+    correct_index: int = Field(..., ge=0)
+
+    @model_validator(mode="after")
+    def correct_index_in_range(self) -> QuizQuestion:
+        if self.correct_index >= len(self.options):
+            raise ValueError("correct_index out of range for options")
+        return self
+
+
+class QuizResponse(BaseModel):
+    questions: List[QuizQuestion]

@@ -167,6 +167,10 @@ select {
 
 .scan-header-actions {
   flex-shrink: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  align-items: center;
 }
 
 .scan-title {
@@ -327,5 +331,62 @@ select {
   border-color: rgba(240, 168, 168, 0.45);
   background: rgba(240, 80, 80, 0.08);
   color: #f0c4c4;
+}
+
+.quiz-list {
+  margin: 0;
+  padding-left: 1.25rem;
+  display: grid;
+  gap: 18px;
+}
+
+.quiz-item {
+  padding-bottom: 4px;
+}
+
+.quiz-prompt {
+  margin: 0 0 10px 0;
+  line-height: 1.55;
+  font-size: 1rem;
+}
+
+.quiz-options {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.quiz-option-label {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.12);
+  cursor: pointer;
+}
+
+.quiz-option-input {
+  margin-top: 4px;
+  accent-color: var(--accent);
+  flex-shrink: 0;
+}
+
+.quiz-option-correct {
+  border-color: rgba(122, 200, 160, 0.55);
+  background: rgba(80, 180, 120, 0.12);
+}
+
+.quiz-option-wrong {
+  border-color: rgba(240, 120, 120, 0.55);
+  background: rgba(180, 60, 60, 0.1);
+}
+
+.quiz-option-reveal {
+  border-style: dashed;
+  border-color: rgba(122, 200, 160, 0.45);
 }
 
