@@ -7,8 +7,17 @@ from fastapi import FastAPI, HTTPException
 load_dotenv(Path(__file__).resolve().parent.parent / ".env")
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
+from .dictionary_definitions import define_terms_from_dictionary
 from .llm_extract import extract_via_llm
-from .schemas import ExtractRequest, ExtractResponse
+from .schemas import (
+    DefinitionsRequest,
+    DefinitionsResponse,
+    ExtractRequest,
+    ExtractResponse,
+    TranslateRequest,
+    TranslateResponse,
+)
+from .translation_mymemory import translate_via_mymemory
 
 app = FastAPI(title="CEFR-Scan API")
 
@@ -39,5 +48,37 @@ def extract(req: ExtractRequest) -> ExtractResponse:
         raise HTTPException(
             status_code=502,
             detail=f"Could not parse or validate LLM output: {e!s}",
+        ) from e
+
+
+@app.post("/api/definitions", response_model=DefinitionsResponse)
+async def definitions(req: DefinitionsRequest) -> DefinitionsResponse:
+    try:
+        return await define_terms_from_dictionary(req)
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Dictionary request failed. {e!s}",
+        ) from e
+    except (ValueError, ValidationError) as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not build definitions response: {e!s}",
+        ) from e
+
+
+@app.post("/api/translate", response_model=TranslateResponse)
+async def translate(req: TranslateRequest) -> TranslateResponse:
+    try:
+        return await translate_via_mymemory(req)
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Translation request failed. {e!s}",
+        ) from e
+    except (ValueError, ValidationError) as e:
+        raise HTTPException(
+            status_code=502,
+            detail=str(e),
         ) from e
 

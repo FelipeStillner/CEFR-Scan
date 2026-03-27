@@ -1,9 +1,10 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { FormEvent } from "react";
 
-type EnglishLevel = "Beginner" | "Intermediary" | "Advanced";
+import { saveScanSession, type EnglishLevel } from "@/lib/scanSession";
 
 type VocabularyItem = {
   term: string;
@@ -14,18 +15,17 @@ type ExtractResponse = {
 };
 
 export default function Home() {
+  const router = useRouter();
   const [text, setText] = useState("");
   const [level, setLevel] = useState<EnglishLevel>("Beginner");
   const [status, setStatus] = useState("");
-  const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
 
   const apiBase = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
 
   async function onSubmit(e: FormEvent) {
     e.preventDefault();
 
-    setStatus("Requesting...");
-    setVocabulary([]);
+    setStatus("Finding terms…");
 
     const resp = await fetch(`${apiBase}/api/extract`, {
       method: "POST",
@@ -40,8 +40,19 @@ export default function Home() {
     }
 
     const data = (await resp.json()) as ExtractResponse;
-    setVocabulary(data.vocabulary || []);
-    setStatus(`Done. Found ${data.vocabulary?.length || 0} terms for ${level}.`);
+    const terms = (data.vocabulary || []).map((v) => v.term).filter(Boolean);
+    const seen = new Set<string>();
+    const vocabulary: string[] = [];
+    for (const t of terms) {
+      const key = t.toLowerCase();
+      if (seen.has(key)) continue;
+      seen.add(key);
+      vocabulary.push(t);
+    }
+
+    saveScanSession({ text, level, vocabulary });
+    setStatus("");
+    router.push("/scan");
   }
 
   return (
@@ -49,8 +60,8 @@ export default function Home() {
       <header className="header">
         <h1>CEFR-Scan</h1>
         <p className="subtitle">
-          Paste text and pick your English level. The app lists words and phrases in the text that are not
-          generally expected at that level.
+          Paste text and pick your English level, then open the reader to review challenging terms and build
+          your vocabulary.
         </p>
       </header>
 
@@ -60,7 +71,7 @@ export default function Home() {
           <textarea
             value={text}
             onChange={(e) => setText(e.target.value)}
-            rows={8}
+            rows={10}
             placeholder="Paste an English paragraph here..."
             required
           />
@@ -76,28 +87,13 @@ export default function Home() {
         </label>
 
         <button className="button" type="submit">
-          Find challenging terms
+          Find terms
         </button>
-      </form>
 
-      <section className="panel">
-        <h2>Results</h2>
         <div id="status" className="status" aria-live="polite">
           {status}
         </div>
-        <div className="items">
-          {vocabulary.length === 0 ? (
-            <p className="empty">No vocabulary returned yet.</p>
-          ) : (
-            vocabulary.map((item) => (
-              <article key={item.term} className="card">
-                <h3>{item.term}</h3>
-              </article>
-            ))
-          )}
-        </div>
-      </section>
+      </form>
     </main>
   );
 }
-
