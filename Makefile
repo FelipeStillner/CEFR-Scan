@@ -6,11 +6,8 @@ UVICORN := $(VENV_DIR)/bin/uvicorn
 
 OLLAMA_URL ?= http://127.0.0.1:11434
 
-.PHONY: help install-backend run-backend install-frontend run-frontend run-ollama dev eval db db-reset clean
+.PHONY: help install-backend run-backend install-frontend run-frontend run-ollama dev eval clean
 
-DB_DIR := database
-DB_FILE := $(DB_DIR)/db.sqlite
-DB_SQL := $(DB_DIR)/schema.sql
 
 help:
 	@echo "Common targets:"
@@ -21,8 +18,6 @@ help:
 	@echo "  make run-ollama        # start Ollama server if not already up (:11434)"
 	@echo "  make dev               # ensure Ollama, then run backend + frontend (parallel)"
 	@echo "  make eval              # run eval fixtures; save responses under eval/runs/"
-	@echo "  make db                # reset + load CEFR CSV into $(DB_FILE)"
-	@echo "  make db-reset          # force recreate $(DB_FILE) from $(DB_SQL)"
 	@echo "  make clean             # remove venv + frontend build artifacts"
 
 install-backend:
@@ -55,15 +50,6 @@ dev: install-backend install-frontend run-ollama
 
 eval:
 	@python3 eval/run_eval.py
-
-db: db-reset
-	@python3 scripts/fetch_and_load_cefr_csv.py --db "$(DB_FILE)" --schema "$(DB_SQL)"
-
-db-reset:
-	@mkdir -p "$(DB_DIR)"
-	@rm -f "$(DB_FILE)"
-	@sqlite3 "$(DB_FILE)" < "$(DB_SQL)"
-	@echo "Created $(DB_FILE)"
 
 clean:
 	@rm -rf $(VENV_DIR)
