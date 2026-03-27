@@ -13,7 +13,7 @@ from .schemas import ExtractRequest, ExtractResponse
 from .sanitize_payload import sanitize_payload
 
 DEFAULT_GEMINI_BASE = "https://generativelanguage.googleapis.com"
-DEFAULT_GEMINI_MODEL = "gemini-1.5-flash"
+DEFAULT_GEMINI_MODEL = "gemini-2.5-flash"
 
 
 def _gemini_base() -> str:
