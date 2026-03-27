@@ -245,6 +245,14 @@ select {
   outline: 1px solid var(--hl-border);
 }
 
+.text-readonly .text-plain {
+  cursor: default;
+}
+
+.select-actions {
+  margin-top: 18px;
+}
+
 .def-status {
   margin: 0 0 10px 0;
   font-size: 0.9rem;

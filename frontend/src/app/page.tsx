@@ -52,7 +52,7 @@ export default function Home() {
 
     saveScanSession({ text, level, vocabulary });
     setStatus("");
-    router.push("/scan");
+    router.push("/select");
   }
 
   return (
@@ -60,8 +60,8 @@ export default function Home() {
       <header className="header">
         <h1>CEFR-Scan</h1>
         <p className="subtitle">
-          Paste text and pick your English level, then open the reader to review challenging terms and build
-          your vocabulary.
+          Paste text and pick your English level. Next, mark the words you do not know, then open definitions
+          when you are ready.
         </p>
       </header>
 

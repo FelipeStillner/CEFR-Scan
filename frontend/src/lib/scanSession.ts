@@ -5,8 +5,10 @@ export type EnglishLevel = "Beginner" | "Intermediary" | "Advanced";
 export type ScanSession = {
   text: string;
   level: EnglishLevel;
-  /** Current vocabulary (includes backend terms and user-added from the text). */
+  /** All terms returned from the extract step. */
   vocabulary: string[];
+  /** Terms the user marked as unknown on the select page (used on quiz + definitions). */
+  studyVocabulary?: string[];
 };
 
 export function saveScanSession(data: ScanSession): void {
@@ -27,7 +29,13 @@ export function loadScanSession(): ScanSession | null {
     const vocab = o.vocabulary;
     if (level !== "Beginner" && level !== "Intermediary" && level !== "Advanced") return null;
     if (!Array.isArray(vocab) || !vocab.every((t) => typeof t === "string")) return null;
-    return { text, level, vocabulary: [...vocab] };
+    const study = o.studyVocabulary;
+    let studyVocabulary: string[] | undefined;
+    if (study !== undefined) {
+      if (!Array.isArray(study) || !study.every((t) => typeof t === "string")) return null;
+      studyVocabulary = [...study];
+    }
+    return { text, level, vocabulary: [...vocab], studyVocabulary };
   } catch {
     return null;
   }
