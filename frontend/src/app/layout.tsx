@@ -3,7 +3,7 @@ import "./globals.css";
 
 export const metadata: Metadata = {
   title: "CEFR-Scan",
-  description: "Extract CEFR-matched words and expressions from your text.",
+  description: "Find words and phrases in a text that are not expected at your chosen English level.",
 };
 
 export default function RootLayout({

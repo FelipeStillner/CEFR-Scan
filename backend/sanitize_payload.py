@@ -21,12 +21,14 @@ def sanitize_payload(data: dict[str, Any]) -> dict[str, Any]:
         raw_vocab = out.get("items") if isinstance(out.get("items"), list) else []
 
     vocabulary: list[dict[str, str]] = []
+    seen: set[str] = set()
     for entry in raw_vocab:
         if isinstance(entry, dict):
             term = _coerce_term(entry.get("term"))
         else:
             term = _coerce_term(entry)
-        if term:
+        if term and term not in seen:
+            seen.add(term)
             vocabulary.append({"term": term})
 
     out["vocabulary"] = vocabulary

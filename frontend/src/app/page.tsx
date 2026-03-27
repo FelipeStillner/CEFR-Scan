@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { FormEvent } from "react";
 
-type CEFR_LEVEL = "A1" | "A2" | "B1" | "B2" | "C1";
+type EnglishLevel = "Beginner" | "Intermediary" | "Advanced";
 
 type VocabularyItem = {
   term: string;
@@ -15,7 +15,7 @@ type ExtractResponse = {
 
 export default function Home() {
   const [text, setText] = useState("");
-  const [level, setLevel] = useState<CEFR_LEVEL>("A1");
+  const [level, setLevel] = useState<EnglishLevel>("Beginner");
   const [status, setStatus] = useState("");
   const [vocabulary, setVocabulary] = useState<VocabularyItem[]>([]);
 
@@ -49,7 +49,8 @@ export default function Home() {
       <header className="header">
         <h1>CEFR-Scan</h1>
         <p className="subtitle">
-          Paste text and pick a CEFR level. The backend returns a simplified vocabulary list.
+          Paste text and pick your English level. The app lists words and phrases in the text that are not
+          generally expected at that level.
         </p>
       </header>
 
@@ -66,18 +67,16 @@ export default function Home() {
         </label>
 
         <label className="field">
-          <span className="label">CEFR level</span>
-          <select value={level} onChange={(e) => setLevel(e.target.value as CEFR_LEVEL)} required>
-            <option value="A1">A1</option>
-            <option value="A2">A2</option>
-            <option value="B1">B1</option>
-            <option value="B2">B2</option>
-            <option value="C1">C1</option>
+          <span className="label">English level</span>
+          <select value={level} onChange={(e) => setLevel(e.target.value as EnglishLevel)} required>
+            <option value="Beginner">Beginner</option>
+            <option value="Intermediary">Intermediary</option>
+            <option value="Advanced">Advanced</option>
           </select>
         </label>
 
         <button className="button" type="submit">
-          Extract matches
+          Find challenging terms
         </button>
       </form>
 

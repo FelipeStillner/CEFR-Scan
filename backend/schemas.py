@@ -3,7 +3,7 @@ from typing import List, Optional, Literal
 from pydantic import BaseModel, Field
 
 
-CEFR_LEVEL = Literal["A1", "A2", "B1", "B2", "C1"]
+ENGLISH_LEVEL = Literal["Beginner", "Intermediary", "Advanced"]
 
 class VocabularyItem(BaseModel):
     term: str
@@ -11,7 +11,7 @@ class VocabularyItem(BaseModel):
 
 class ExtractRequest(BaseModel):
     text: str = Field(..., min_length=1)
-    level: CEFR_LEVEL
+    level: ENGLISH_LEVEL
 
 
 class ExtractResponse(BaseModel):

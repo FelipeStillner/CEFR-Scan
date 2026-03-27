@@ -32,9 +32,14 @@ def _gemini_api_key() -> str:
 
 
 def _build_prompt(req: ExtractRequest) -> tuple[str, str]:
-    system = """You are an English learning assistant. The user provides English text and a CEFR level (A1, A2, B1, B2, or C1).
+    system = """You are an English learning assistant. The user provides English text and a proficiency level: Beginner, Intermediary, or Advanced.
 
-Your task: identify words, expressions, and short phrases in the text that are useful for a learner at that CEFR level. Prefer items that clearly match the chosen level (not necessarily every rare word).
+Level meanings (for calibration):
+- Beginner: early-stage learner; basic everyday vocabulary and simple structures only.
+- Intermediary: can handle common topics and connected text; still misses many advanced or low-frequency items.
+- Advanced: strong command of general English; only rare, technical, highly idiomatic, or specialized items are typically unknown.
+
+Your task: from the ORIGINAL TEXT, list every word, multi-word expression, or short phrase that a learner at the SELECTED level would NOT generally be expected to understand yet—i.e. items above that level (too difficult, rare, idiomatic, technical, or specialized for that level). Use substrings that appear exactly as in the text when possible (same spelling and inflection).
 
 You MUST respond with a single JSON object only. No markdown fences, no commentary before or after.
 
@@ -49,10 +54,12 @@ Rules:
 - Return ONLY the key "vocabulary".
 - Each vocabulary element must contain ONLY one key: "term" (string).
 - Do not return booleans/numbers for "term".
-- Keep the list reasonably small (at most ~25 terms for long texts).
-- If there are no good matches, return {"vocabulary": []}."""
+- Be exhaustive: include ALL such items from the text. Do not cap or sample the list for length. If the text is long, the list may be long.
+- Order terms by first occurrence in the text (top to bottom).
+- If the same challenging form appears twice, include it once.
+- If every substantive word in the text is within reach for that level, return {"vocabulary": []}."""
 
-    user = f"""CEFR level: {req.level}
+    user = f"""Proficiency level: {req.level}
 
 Original text (use this exact string for index calculations):
 ---
