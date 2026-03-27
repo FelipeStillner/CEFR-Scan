@@ -2,7 +2,7 @@ import httpx
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import ValidationError
-from .llm_extract import extract_via_ollama
+from .llm_extract import extract_via_llm
 from .schemas import ExtractRequest, ExtractResponse
 
 app = FastAPI(title="CEFR-Scan API")
@@ -24,11 +24,11 @@ def health() -> dict:
 @app.post("/api/extract", response_model=ExtractResponse)
 def extract(req: ExtractRequest) -> ExtractResponse:
     try:
-        return extract_via_ollama(req)
+        return extract_via_llm(req)
     except httpx.HTTPError as e:
         raise HTTPException(
             status_code=503,
-            detail=f"Ollama request failed (is Ollama running?). {e!s}",
+            detail=f"Gemini request failed. {e!s}",
         ) from e
     except (ValueError, ValidationError) as e:
         raise HTTPException(
