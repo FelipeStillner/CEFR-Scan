@@ -33,6 +33,11 @@ export function loadScanSession(): ScanSession | null {
   }
 }
 
+export function clearScanSession(): void {
+  if (typeof window === "undefined") return;
+  sessionStorage.removeItem(SCAN_SESSION_KEY);
+}
+
 /** Strip wrapping punctuation; require at least one letter or digit. */
 export function normalizeClickedToken(raw: string): string | null {
   const trimmed = raw.trim();

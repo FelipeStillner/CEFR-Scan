@@ -79,6 +79,16 @@ select {
   outline: none;
 }
 
+input[type="text"] {
+  width: 100%;
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  border-radius: 10px;
+  padding: 10px 12px;
+  outline: none;
+}
+
 .button {
   border: 1px solid var(--border);
   background: rgba(122, 162, 255, 0.15);
@@ -173,6 +183,29 @@ select {
   margin: 0 0 6px 0;
 }
 
+.phase-tracker {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  list-style: none;
+  margin: 12px 0 0 0;
+  padding: 0;
+}
+
+.phase-tracker li {
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  padding: 4px 10px;
+  font-size: 0.83rem;
+  color: var(--muted);
+}
+
+.phase-tracker li.active {
+  color: var(--text);
+  border-color: var(--hl-border);
+  background: rgba(122, 162, 255, 0.12);
+}
+
 .translate-lang-bar {
   display: flex;
   flex-wrap: wrap;
@@ -208,6 +241,17 @@ select {
 .scan-pane {
   margin-bottom: 0;
   min-height: 200px;
+}
+
+.inline-add {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+  margin: 0 0 12px 0;
+}
+
+.text-input {
+  flex: 1;
 }
 
 .pane-heading {
@@ -252,6 +296,13 @@ select {
 
 .def-error {
   color: #f0a8a8;
+}
+
+.vocab-scroll {
+  height: min(52vh, 430px);
+  overflow-y: auto;
+  scrollbar-gutter: stable;
+  padding-right: 4px;
 }
 
 .vocab-cards {
@@ -319,5 +370,69 @@ select {
   border-color: rgba(240, 168, 168, 0.45);
   background: rgba(240, 80, 80, 0.08);
   color: #f0c4c4;
+}
+
+.flow-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
+}
+
+.flow-nav {
+  margin-top: 16px;
+}
+
+.flow-nav-buttons {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.quiz-score,
+.quiz-progress {
+  margin: 0 0 8px 0;
+  color: var(--muted);
+}
+
+.quiz-prompt {
+  margin: 4px 0 12px 0;
+  font-weight: 600;
+}
+
+.quiz-options {
+  display: grid;
+  gap: 8px;
+}
+
+.quiz-option {
+  border: 1px solid var(--border);
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--text);
+  text-align: left;
+  border-radius: 10px;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.quiz-option:disabled {
+  cursor: default;
+  opacity: 1;
+}
+
+.quiz-option-correct {
+  border-color: rgba(118, 225, 160, 0.75);
+  background: rgba(74, 191, 121, 0.18);
+}
+
+.quiz-option-wrong {
+  border-color: rgba(240, 120, 120, 0.75);
+  background: rgba(240, 80, 80, 0.14);
+}
+
+.quiz-actions {
+  margin-top: 12px;
+  display: flex;
+  gap: 10px;
+  justify-content: space-between;
 }
 
