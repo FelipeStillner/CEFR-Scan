@@ -49,3 +49,44 @@ class TranslateRequest(BaseModel):
 
 class TranslateResponse(BaseModel):
     translated_text: str
+
+
+class QuizOneRequest(BaseModel):
+    text: str = Field(..., min_length=1)
+    terms: List[str] = Field(..., min_length=1, max_length=200)
+
+    @field_validator("terms")
+    @classmethod
+    def unique_nonempty_terms(cls, v: List[str]) -> List[str]:
+        seen: set[str] = set()
+        out: List[str] = []
+        for raw in v:
+            term = raw.strip() if isinstance(raw, str) else ""
+            if not term:
+                continue
+            key = term.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(term)
+        if not out:
+            raise ValueError("At least one unique non-empty term is required")
+        return out
+
+
+class QuizOneQuestion(BaseModel):
+    prompt: str = Field(..., min_length=1)
+    options: List[str] = Field(..., min_length=4, max_length=4)
+    answerIndex: int = Field(..., ge=0, le=3)
+
+    @field_validator("options")
+    @classmethod
+    def options_nonempty(cls, v: List[str]) -> List[str]:
+        cleaned = [o.strip() for o in v if isinstance(o, str) and o.strip()]
+        if len(cleaned) != 4:
+            raise ValueError("Each question must include exactly 4 non-empty options")
+        return cleaned
+
+
+class QuizOneResponse(BaseModel):
+    questions: List[QuizOneQuestion]
