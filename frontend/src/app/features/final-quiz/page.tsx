@@ -73,26 +73,28 @@ export default function FinalQuizStepPage() {
 
   if (!ready) {
     return (
-      <main className="container container-wide">
-        <p className="muted">Loading…</p>
+      <main className="container container-wide scan-app">
+        <div className="scan-app__loading">Loading your session…</div>
       </main>
     );
   }
 
   return (
-    <main className="container container-wide">
+    <main className="container container-wide scan-app">
       <ScanStepHeader phase={5} onReset={onReset} />
 
-      <QuizPanel
-        title="Final quiz"
-        showText={false}
-        text={text}
-        questions={FINAL_QUIZ_QUESTIONS}
-        quizState={quizTwo}
-        onChoose={answerQuiz}
-        onSkip={skipQuiz}
-        onNext={nextQuiz}
-      />
+      <div className="scan-app__content">
+        <QuizPanel
+          title="Mixed skills quiz"
+          showText={false}
+          text={text}
+          questions={FINAL_QUIZ_QUESTIONS}
+          quizState={quizTwo}
+          onChoose={answerQuiz}
+          onSkip={skipQuiz}
+          onNext={nextQuiz}
+        />
+      </div>
 
       <ScanStepNav phase={5} />
     </main>

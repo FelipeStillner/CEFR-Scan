@@ -46,12 +46,12 @@ export default function VocabularyQuizStepPage() {
     if (!text.trim()) return;
     if (vocabulary.length < 4) {
       setQuizOneQuestions([]);
-      setQuizOneStatus("Select at least four vocabulary words first.");
+      setQuizOneStatus("Add at least four words on the previous step before taking this quiz.");
       return;
     }
 
     setIsGeneratingQuizOne(true);
-    setQuizOneStatus("Generating quiz...");
+    setQuizOneStatus("Preparing your quiz…");
     setQuizOne(initialQuizState);
     patchWorkflowSession({ quizOne: initialQuizState });
 
@@ -70,7 +70,7 @@ export default function VocabularyQuizStepPage() {
       const data = (await resp.json()) as { questions?: QuizQuestion[] };
       const questions = Array.isArray(data.questions) ? data.questions : [];
       if (!questions.length) {
-        throw new Error("No quiz questions were returned.");
+        throw new Error("The server did not return any questions.");
       }
 
       setQuizOneQuestions(questions);
@@ -82,7 +82,7 @@ export default function VocabularyQuizStepPage() {
     } catch (e) {
       setQuizOneQuestions([]);
       setQuizOneStatus(
-        e instanceof Error ? `Quiz generation failed: ${e.message}` : "Quiz generation failed.",
+        e instanceof Error ? `Could not create the quiz: ${e.message}` : "Could not create the quiz.",
       );
     } finally {
       setIsGeneratingQuizOne(false);
@@ -148,27 +148,29 @@ export default function VocabularyQuizStepPage() {
 
   if (!ready) {
     return (
-      <main className="container container-wide">
-        <p className="muted">Loading…</p>
+      <main className="container container-wide scan-app">
+        <div className="scan-app__loading">Loading your session…</div>
       </main>
     );
   }
 
   return (
-    <main className="container container-wide">
+    <main className="container container-wide scan-app">
       <ScanStepHeader phase={3} onReset={onReset} />
 
-      <GeneratedQuizSection
-        text={text}
-        isGeneratingQuizOne={isGeneratingQuizOne}
-        quizOneStatus={quizOneStatus}
-        quizOneQuestions={quizOneQuestions}
-        quizOne={quizOne}
-        onRetryGenerate={() => void generateQuizOne()}
-        onChoose={answerQuiz}
-        onSkip={skipQuiz}
-        onNext={nextQuiz}
-      />
+      <div className="scan-app__content">
+        <GeneratedQuizSection
+          text={text}
+          isGeneratingQuizOne={isGeneratingQuizOne}
+          quizOneStatus={quizOneStatus}
+          quizOneQuestions={quizOneQuestions}
+          quizOne={quizOne}
+          onRetryGenerate={() => void generateQuizOne()}
+          onChoose={answerQuiz}
+          onSkip={skipQuiz}
+          onNext={nextQuiz}
+        />
+      </div>
 
       <ScanStepNav phase={3} canGoNext={canGoNext} />
     </main>

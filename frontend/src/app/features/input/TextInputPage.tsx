@@ -41,7 +41,7 @@ export default function TextInputPage() {
 
       if (!resp.ok) {
         const msg = await resp.text().catch(() => resp.statusText);
-        setScanStatus(`Error: ${msg}`);
+        setScanStatus(`Something went wrong: ${msg}`);
         return;
       }
 
@@ -62,18 +62,20 @@ export default function TextInputPage() {
   }, [isScanning, text, level, router]);
 
   return (
-    <main className="container container-wide">
+    <main className="container container-wide scan-app">
       <ScanStepHeader phase={1} onReset={() => {}} />
 
-      <TextInputForm
-        text={text}
-        level={level}
-        isScanning={isScanning}
-        scanStatus={scanStatus}
-        onTextChange={setText}
-        onLevelChange={setLevel}
-        onStartScan={runScan}
-      />
+      <div className="scan-app__content">
+        <TextInputForm
+          text={text}
+          level={level}
+          isScanning={isScanning}
+          scanStatus={scanStatus}
+          onTextChange={setText}
+          onLevelChange={setLevel}
+          onStartScan={runScan}
+        />
+      </div>
     </main>
   );
 }

@@ -4,9 +4,7 @@ import { scanRoutes } from "@/app/helpers/scanRoutes";
 
 type ScanStepNavProps = {
   phase: Phase;
-  /** Show "Next phase" (step 1 omits this footer). */
   showNext?: boolean;
-  /** When false, Next is disabled. */
   canGoNext?: boolean;
 };
 
@@ -36,17 +34,17 @@ export function ScanStepNav({ phase, showNext = true, canGoNext = true }: ScanSt
       <div className="flow-nav-buttons">
         {backHref && (
           <Link href={backHref} className="button button-ghost">
-            Back
+            Previous
           </Link>
         )}
 
         {showNext && nextHref && (canGoNext ? (
           <Link href={nextHref} className="button">
-            Next step
+            Continue
           </Link>
         ) : (
           <span className="button scan-step-next-disabled" aria-disabled>
-            Next step
+            Continue
           </span>
         ))}
       </div>

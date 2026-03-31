@@ -108,7 +108,7 @@ export default function ReviewStepPage() {
       } catch (e) {
         if (ac.signal.aborted) return;
         setDefinitions({});
-        setDefError(e instanceof Error ? e.message : "Could not load definitions.");
+        setDefError(e instanceof Error ? e.message : "Definitions could not be loaded.");
       } finally {
         if (!ac.signal.aborted) setDefLoading(false);
       }
@@ -144,7 +144,7 @@ export default function ReviewStepPage() {
       } catch (e) {
         setTransError((prev) => ({
           ...prev,
-          [key]: e instanceof Error ? e.message : "Translation failed.",
+          [key]: e instanceof Error ? e.message : "Could not translate this word.",
         }));
       } finally {
         setTransLoading((prev) => ({ ...prev, [key]: false }));
@@ -155,29 +155,31 @@ export default function ReviewStepPage() {
 
   if (!ready) {
     return (
-      <main className="container container-wide">
-        <p className="muted">Loading…</p>
+      <main className="container container-wide scan-app">
+        <div className="scan-app__loading">Loading your session…</div>
       </main>
     );
   }
 
   return (
-    <main className="container container-wide">
+    <main className="container container-wide scan-app">
       <ScanStepHeader phase={4} onReset={onReset} />
 
-      <TermReview
-        text={text}
-        vocabulary={vocabulary}
-        translateLang={translateLang}
-        onTranslateLangChange={setTranslateLang}
-        definitions={definitions}
-        defLoading={defLoading}
-        defError={defError}
-        translationCache={translationCache}
-        transLoading={transLoading}
-        transError={transError}
-        onTranslateTerm={translateTerm}
-      />
+      <div className="scan-app__content">
+        <TermReview
+          text={text}
+          vocabulary={vocabulary}
+          translateLang={translateLang}
+          onTranslateLangChange={setTranslateLang}
+          definitions={definitions}
+          defLoading={defLoading}
+          defError={defError}
+          translationCache={translationCache}
+          transLoading={transLoading}
+          transError={transError}
+          onTranslateTerm={translateTerm}
+        />
+      </div>
 
       <ScanStepNav phase={4} canGoNext />
     </main>

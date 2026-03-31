@@ -55,25 +55,27 @@ export default function VocabularyStepPage() {
 
   if (!ready) {
     return (
-      <main className="container container-wide">
-        <p className="muted">Loading…</p>
+      <main className="container container-wide scan-app">
+        <div className="scan-app__loading">Loading your session…</div>
       </main>
     );
   }
 
   return (
-    <main className="container container-wide">
+    <main className="container container-wide scan-app">
       <ScanStepHeader phase={2} onReset={onReset} />
 
-      <VocabularyEditor
-        text={text}
-        vocabulary={vocabulary}
-        manualTerm={manualTerm}
-        onManualTermChange={setManualTerm}
-        onAddManual={addManualTerm}
-        onWordClick={addRawTerm}
-        onRemoveTerm={removeTerm}
-      />
+      <div className="scan-app__content">
+        <VocabularyEditor
+          text={text}
+          vocabulary={vocabulary}
+          manualTerm={manualTerm}
+          onManualTermChange={setManualTerm}
+          onAddManual={addManualTerm}
+          onWordClick={addRawTerm}
+          onRemoveTerm={removeTerm}
+        />
+      </div>
 
       <ScanStepNav phase={2} canGoNext={canGoNext} />
     </main>

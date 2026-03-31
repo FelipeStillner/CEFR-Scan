@@ -18,7 +18,7 @@ export function ClickableText({ text, onWordClick }: ClickableTextProps) {
             key={i}
             type="button"
             className="text-token"
-            title="Add word to vocabulary"
+            title="Add this word to your list"
             onClick={() => onWordClick(seg.value)}
           >
             {seg.value}

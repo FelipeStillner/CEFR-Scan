@@ -20,38 +20,42 @@ export function TextInputForm({
   onStartScan,
 }: TextInputFormProps) {
   return (
-    <section className="panel">
-      <h2 className="pane-heading">Paste text and run the scan</h2>
-      <label className="field">
-        <span className="label">English text</span>
+    <section className="panel panel--input scan-pane">
+      <h2 className="pane-heading">Your text</h2>
+      <p className="hint pane-hint">
+        Paste a paragraph in English. Then choose the level you are studying at — words above that level will be suggested after you run the scan.
+      </p>
+      <label className="field field--fill">
+        <span className="label">Paragraph</span>
         <textarea
+          className="textarea-grow"
           value={text}
           onChange={(e) => onTextChange(e.target.value)}
-          rows={10}
-          placeholder="Paste an English paragraph here..."
+          rows={8}
+          placeholder="Paste or type your English text here…"
           required
         />
       </label>
 
       <label className="field">
-        <span className="label">English level</span>
+        <span className="label">Target level</span>
         <select value={level} onChange={(e) => onLevelChange(e.target.value as EnglishLevel)} required>
-          <option value="Beginner">Beginner</option>
-          <option value="Intermediary">Intermediary</option>
-          <option value="Advanced">Advanced</option>
+          <option value="Beginner">Beginner (A1–A2)</option>
+          <option value="Intermediary">Intermediate (B1–B2)</option>
+          <option value="Advanced">Advanced (C1–C2)</option>
         </select>
       </label>
 
       <div className="flow-actions">
         {!!text.trim() && !isScanning && (
           <button type="button" className="button" onClick={onStartScan}>
-            Start scan
+            Run scan
           </button>
         )}
       </div>
 
       <p className="status" aria-live="polite">
-        {isScanning ? "Finding terms..." : scanStatus}
+        {isScanning ? "Scanning your text…" : scanStatus}
       </p>
     </section>
   );

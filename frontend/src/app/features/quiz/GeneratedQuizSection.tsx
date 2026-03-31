@@ -31,7 +31,7 @@ export function GeneratedQuizSection({
       {isGeneratingQuizOne && (
         <section className="panel scan-pane">
           <h2 className="pane-heading">{QUIZ_SECTION_TITLE}</h2>
-          <p className="muted">Generating questions…</p>
+          <p className="muted">Building questions from your text and word list…</p>
         </section>
       )}
 
@@ -43,7 +43,7 @@ export function GeneratedQuizSection({
           </p>
           <div className="flow-actions">
             <button type="button" className="button" onClick={onRetryGenerate}>
-              Try again
+              Generate again
             </button>
           </div>
         </section>

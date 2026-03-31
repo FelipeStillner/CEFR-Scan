@@ -35,19 +35,23 @@ export function TermReview({
   return (
     <div className="scan-split">
       <section className="panel scan-pane">
-        <h2 className="pane-heading">Text</h2>
-        <p className="text-block preview" lang="en">
-          {text}
-        </p>
+        <h2 className="pane-heading">Source text</h2>
+        <div className="scan-pane-scroll">
+          <p className="text-block preview" lang="en">
+            {text}
+          </p>
+        </div>
       </section>
 
       <section className="panel scan-pane">
-        <h2 className="pane-heading">Terms & definitions</h2>
-        <p className="hint pane-hint">Definitions and optional translations — editing the list is disabled here.</p>
+        <h2 className="pane-heading">Words & meanings</h2>
+        <p className="hint pane-hint">
+          Read each definition. Optionally load a translation and open a dictionary search in a new tab.
+        </p>
 
         <div className="translate-lang-bar">
           <label className="translate-lang-label" htmlFor="translate-lang">
-            Translation language
+            Translation
           </label>
           <select
             id="translate-lang"
@@ -65,7 +69,7 @@ export function TermReview({
 
         {defLoading && vocabulary.length > 0 && (
           <p className="def-status muted" aria-live="polite">
-            Loading definitions...
+            Loading definitions…
           </p>
         )}
         {defError && (
@@ -76,7 +80,7 @@ export function TermReview({
 
         <div className="vocab-scroll">
           {vocabulary.length === 0 ? (
-            <p className="empty">No terms available.</p>
+            <p className="empty">No words in your list.</p>
           ) : (
             <ul className="vocab-cards">
               {vocabulary.map((term) => {
@@ -92,26 +96,26 @@ export function TermReview({
                     </div>
                     <p className="vocab-definition">
                       {defLoading && !definitions[term] ? (
-                        <span className="muted">...</span>
+                        <span className="muted">…</span>
                       ) : (
-                        definitions[term] || (defError ? "-" : <span className="muted">...</span>)
+                        definitions[term] || (defError ? "—" : <span className="muted">…</span>)
                       )}
                     </p>
 
                     <div className="vocab-actions">
                       {!tLoad && (
                         <button type="button" className="button" onClick={() => onTranslateTerm(term)}>
-                          Translation
+                          Translate
                         </button>
                       )}
-                      {tLoad && <span className="muted">Translating...</span>}
+                      {tLoad && <span className="muted">Translating…</span>}
                       <a
                         className="button"
                         href={googleSearchUrl(term)}
                         target="_blank"
                         rel="noopener noreferrer"
                       >
-                        Google search
+                        Search the web
                       </a>
                     </div>
 
