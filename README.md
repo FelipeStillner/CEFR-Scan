@@ -1,6 +1,6 @@
 # CEFR Scan
 
-A small full-stack app for **English learners**: paste a text, choose a proficiency band (**Beginner**, **Intermediary**, or **Advanced**), and get suggested vocabulary to study. You then edit a word list, take a **text-based vocabulary quiz**, review **definitions** and optional **translations**, and finish with a short **general English quiz**.
+A small full-stack app for **English learners**: paste a text, choose a proficiency band (**Beginner**, **Intermediary**, or **Advanced**), and get suggested vocabulary to study. You then edit a word list, take a **text-based vocabulary quiz**, review **definitions** and optional **translations**, and finish with a **generated mixed-skills final quiz** (passage + vocabulary).
 
 The UI is a **five-step flow** in the browser (classroom-style layout). Progress is kept in **session storage** so you can refresh or move between steps without losing the current session (until you start over or close the tab).
 
@@ -12,7 +12,7 @@ The UI is a **five-step flow** in the browser (classroom-style layout). Progress
 | 2 · Words | `/vocabulary` | Click words in the text or add/remove manually; need **≥ 4 words** to continue. |
 | 3 · Quiz A | `/quiz` | **Generated** multiple-choice quiz from your text + word list (`POST /api/quiz-one`). |
 | 4 · Review | `/review` | **Definitions** (`POST /api/definitions`) and optional **translations** (`POST /api/translate`). |
-| 5 · Quiz B | `/final-quiz` | Fixed **mixed-skills** questions (static on the frontend). |
+| 5 · Quiz B | `/final-quiz` | **Generated** mixed-skills quiz: reading + harder vocabulary (`POST /api/quiz-two`). |
 
 Public URLs (`/vocabulary`, `/quiz`, …) are **rewritten** in Next.js to the real pages under `frontend/src/app/features/…` (see `frontend/next.config.js`).
 
@@ -22,7 +22,7 @@ Public URLs (`/vocabulary`, `/quiz`, …) are **rewritten** in Next.js to the re
 | --- | --- |
 | Frontend | **Next.js** (App Router, React, TypeScript), `frontend/` |
 | Backend | **FastAPI** (`backend/main.py`) |
-| Extract & quiz generation | **Google Gemini** (HTTP API via `httpx`) — `backend/llm_extract.py`, `backend/llm_quiz.py` |
+| Extract & quiz generation | **Google Gemini** (HTTP API via `httpx`) — `backend/llm_extract.py`, `backend/llm_quiz.py`, `backend/llm_quiz_two.py` |
 | Definitions | Free dictionary API — `backend/dictionary_definitions.py` |
 | Translation | MyMemory API — `backend/translation_mymemory.py` |
 
@@ -72,7 +72,7 @@ Set **`NEXT_PUBLIC_API_BASE_URL`** when building or running the frontend if the 
 
 | Variable | Purpose |
 | --- | --- |
-| `GEMINI_API_KEY` | **Required** for `POST /api/extract` and `POST /api/quiz-one` (Gemini). |
+| `GEMINI_API_KEY` | **Required** for `POST /api/extract`, `POST /api/quiz-one`, and `POST /api/quiz-two` (Gemini). |
 | `GEMINI_BASE_URL` | Optional override (default: Google Generative Language API). |
 | `GEMINI_MODEL` | Optional model name (default in code: `gemini-2.5-flash`). |
 
@@ -86,7 +86,8 @@ Other integrations (dictionary, MyMemory) may use their own defaults or env vars
 | `POST` | `/api/extract` | `{ text, level }` → `{ vocabulary: [{ term }] }` |
 | `POST` | `/api/definitions` | `{ terms }` → definitions per term |
 | `POST` | `/api/translate` | `{ text, target_lang }` → translated text |
-| `POST` | `/api/quiz-one` | `{ text, terms }` → generated quiz questions |
+| `POST` | `/api/quiz-one` | `{ text, terms }` → generated vocabulary-in-context quiz |
+| `POST` | `/api/quiz-two` | `{ text, terms, level }` → harder mixed quiz (comprehension + vocabulary) |
 
 Request/response shapes are defined in **`backend/schemas.py`**.
 
@@ -118,14 +119,15 @@ Root **`frontend/src/app/page.tsx`** re-exports the first step from `features/in
 ## Implementation notes
 
 1. **Extract**: builds a prompt with the user text and level, calls Gemini, parses JSON into `ExtractResponse`, validates with Pydantic.
-2. **Quiz one**: Gemini generates questions tied to the passage and selected terms.
-3. **Frontend session**: stored under `sessionStorage` key `cefr-workflow-session` (see `frontend/src/app/helpers/workflowSession.ts`).
+2. **Quiz one**: Gemini generates vocabulary-in-context questions tied to the passage and selected terms.
+3. **Quiz two (final)**: Gemini returns eight questions—four on the passage (main idea, detail, inference) and four harder vocabulary items aligned with the first four selected terms (options drawn from the full word list).
+4. **Frontend session**: stored under `sessionStorage` key `cefr-workflow-session` (see `frontend/src/app/helpers/workflowSession.ts`).
 
 ## Key files
 
 | Area | Files |
 | --- | --- |
-| API | `backend/main.py`, `backend/schemas.py`, `backend/llm_extract.py`, `backend/llm_quiz.py` |
+| API | `backend/main.py`, `backend/schemas.py`, `backend/llm_extract.py`, `backend/llm_quiz.py`, `backend/llm_quiz_two.py` |
 | Frontend entry | `frontend/src/app/page.tsx`, `frontend/src/app/layout.tsx`, `frontend/src/app/globals.css` |
 | Rewrites | `frontend/next.config.js` |
 | Automation | `Makefile` |

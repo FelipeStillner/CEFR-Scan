@@ -90,3 +90,32 @@ class QuizOneQuestion(BaseModel):
 
 class QuizOneResponse(BaseModel):
     questions: List[QuizOneQuestion]
+
+
+class QuizTwoRequest(BaseModel):
+    text: str = Field(..., min_length=1)
+    terms: List[str] = Field(..., min_length=1, max_length=200)
+    level: ENGLISH_LEVEL
+
+    @field_validator("terms")
+    @classmethod
+    def unique_nonempty_terms(cls, v: List[str]) -> List[str]:
+        seen: set[str] = set()
+        out: List[str] = []
+        for raw in v:
+            term = raw.strip() if isinstance(raw, str) else ""
+            if not term:
+                continue
+            key = term.casefold()
+            if key in seen:
+                continue
+            seen.add(key)
+            out.append(term)
+        if not out:
+            raise ValueError("At least one unique non-empty term is required")
+        return out
+
+
+# Same JSON shape as quiz one; OpenAPI name distinguishes the route.
+class QuizTwoResponse(BaseModel):
+    questions: List[QuizOneQuestion]

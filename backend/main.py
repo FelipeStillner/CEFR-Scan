@@ -10,6 +10,7 @@ from pydantic import ValidationError
 from .dictionary_definitions import define_terms_from_dictionary
 from .llm_extract import extract_via_llm
 from .llm_quiz import generate_quiz_one
+from .llm_quiz_two import generate_quiz_two
 from .schemas import (
     DefinitionsRequest,
     DefinitionsResponse,
@@ -17,6 +18,8 @@ from .schemas import (
     ExtractResponse,
     QuizOneRequest,
     QuizOneResponse,
+    QuizTwoRequest,
+    QuizTwoResponse,
     TranslateRequest,
     TranslateResponse,
 )
@@ -90,6 +93,22 @@ async def translate(req: TranslateRequest) -> TranslateResponse:
 def quiz_one(req: QuizOneRequest) -> QuizOneResponse:
     try:
         return generate_quiz_one(req)
+    except httpx.HTTPError as e:
+        raise HTTPException(
+            status_code=503,
+            detail=f"Quiz generation request failed. {e!s}",
+        ) from e
+    except (ValueError, ValidationError) as e:
+        raise HTTPException(
+            status_code=502,
+            detail=f"Could not build quiz: {e!s}",
+        ) from e
+
+
+@app.post("/api/quiz-two", response_model=QuizTwoResponse)
+def quiz_two(req: QuizTwoRequest) -> QuizTwoResponse:
+    try:
+        return generate_quiz_two(req)
     except httpx.HTTPError as e:
         raise HTTPException(
             status_code=503,

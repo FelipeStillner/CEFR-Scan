@@ -9,6 +9,7 @@ export type WorkflowSession = {
   vocabulary: string[];
   quizOneQuestions?: QuizQuestion[];
   quizOne?: QuizState;
+  quizTwoQuestions?: QuizQuestion[];
   quizTwo?: QuizState;
 };
 
@@ -30,6 +31,9 @@ export function loadWorkflowSession(): WorkflowSession | null {
       session.quizOneQuestions = o.quizOneQuestions as QuizQuestion[];
     }
     if (o.quizOne && typeof o.quizOne === "object") session.quizOne = o.quizOne as QuizState;
+    if (Array.isArray(o.quizTwoQuestions)) {
+      session.quizTwoQuestions = o.quizTwoQuestions as QuizQuestion[];
+    }
     if (o.quizTwo && typeof o.quizTwo === "object") session.quizTwo = o.quizTwo as QuizState;
     return session;
   } catch {
