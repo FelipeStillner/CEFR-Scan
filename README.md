@@ -1,103 +1,131 @@
-# CEFR-Scan
+# CEFR Scan
 
-Paste an English text, choose a CEFR level, and the app extracts words/expressions/phrases that should fit that level. It highlights matches in the text and shows a ranked list; clicking an item can reveal an English definition, examples, and a short “why this matches”.
+A small full-stack app for **English learners**: paste a text, choose a proficiency band (**Beginner**, **Intermediary**, or **Advanced**), and get suggested vocabulary to study. You then edit a word list, take a **text-based vocabulary quiz**, review **definitions** and optional **translations**, and finish with a short **general English quiz**.
 
-## MVP status (current repo)
+The UI is a **five-step flow** in the browser (classroom-style layout). Progress is kept in **session storage** so you can refresh or move between steps without losing the current session (until you start over or close the tab).
 
-- Frontend + backend API contract are wired.
-- `POST /api/extract` calls a **local Ollama** model (`format: json`) with the user text and CEFR level, then parses the JSON into `vocabulary`.
-- Requires [Ollama](https://ollama.com) running (default `http://localhost:11434`) and a pulled model (see env vars below).
+## Current feature set
+
+| Step | Route | What happens |
+| --- | --- | --- |
+| 1 · Text | `/` | Paste text, pick level, **run scan** → calls `POST /api/extract` and saves terms. |
+| 2 · Words | `/vocabulary` | Click words in the text or add/remove manually; need **≥ 4 words** to continue. |
+| 3 · Quiz A | `/quiz` | **Generated** multiple-choice quiz from your text + word list (`POST /api/quiz-one`). |
+| 4 · Review | `/review` | **Definitions** (`POST /api/definitions`) and optional **translations** (`POST /api/translate`). |
+| 5 · Quiz B | `/final-quiz` | Fixed **mixed-skills** questions (static on the frontend). |
+
+Public URLs (`/vocabulary`, `/quiz`, …) are **rewritten** in Next.js to the real pages under `frontend/src/app/features/…` (see `frontend/next.config.js`).
 
 ## Stack
 
-- Frontend: Next.js (React + TypeScript) in `frontend/`
-- Backend/API: FastAPI in `backend/` (`backend/main.py`, `backend/llm_extract.py`)
-- LLM: local Ollama HTTP API (`httpx`)
+| Layer | Technology |
+| --- | --- |
+| Frontend | **Next.js** (App Router, React, TypeScript), `frontend/` |
+| Backend | **FastAPI** (`backend/main.py`) |
+| Extract & quiz generation | **Google Gemini** (HTTP API via `httpx`) — `backend/llm_extract.py`, `backend/llm_quiz.py` |
+| Definitions | Free dictionary API — `backend/dictionary_definitions.py` |
+| Translation | MyMemory API — `backend/translation_mymemory.py` |
+
+## Prerequisites
+
+- **Python 3** + **Node.js** (with npm)
+- **Gemini API key** for extract and quiz-one (see below)
+- Optional: `.env` at the repo root (loaded by the backend) for `GEMINI_API_KEY` and other settings
 
 ## Run locally
 
-Prerequisites: Python 3, Node.js + npm.
-
-### Backend
-
 ```bash
 make install-backend
+make install-frontend
+```
+
+### Backend (API on port **8000**)
+
+```bash
 make run-backend
 ```
 
-- API: `http://localhost:8000/api/extract`
 - Health: `http://localhost:8000/health`
+- OpenAPI docs: `http://localhost:8000/docs` (FastAPI auto-docs)
 
-### Frontend
+### Frontend (UI on port **3000**)
 
 ```bash
-make install-frontend
 make run-frontend
 ```
 
-- UI: `http://localhost:3000`
+- App: `http://localhost:3000`
 
-### Or both
+### Backend + frontend together
 
 ```bash
 make dev
 ```
 
-This runs `ollama serve` in the background if Ollama is not already reachable on `http://127.0.0.1:11434`, then starts the API and Next.js in parallel (`make -j2`). Override the check URL with `make dev OLLAMA_URL=http://host:11434` if needed.
+Runs the API and Next.js **in parallel** (`make -j2`).
 
-Frontend API base URL: `NEXT_PUBLIC_API_BASE_URL` (defaults to `http://localhost:8000`).
+### Frontend → API URL
 
-### Ollama (backend)
+Set **`NEXT_PUBLIC_API_BASE_URL`** when building or running the frontend if the API is not on `http://localhost:8000` (default in code).
 
-| Variable | Default | Meaning |
+## Environment variables (backend)
+
+| Variable | Purpose |
+| --- | --- |
+| `GEMINI_API_KEY` | **Required** for `POST /api/extract` and `POST /api/quiz-one` (Gemini). |
+| `GEMINI_BASE_URL` | Optional override (default: Google Generative Language API). |
+| `GEMINI_MODEL` | Optional model name (default in code: `gemini-2.5-flash`). |
+
+Other integrations (dictionary, MyMemory) may use their own defaults or env vars — see the corresponding modules under `backend/`.
+
+## API overview
+
+| Method | Path | Role |
 | --- | --- | --- |
-| `OLLAMA_BASE_URL` | `http://localhost:11434` | Ollama server base URL |
-| `OLLAMA_MODEL` | `llama3.2` | Model name (`ollama pull <name>`) |
+| `GET` | `/health` | Liveness check |
+| `POST` | `/api/extract` | `{ text, level }` → `{ vocabulary: [{ term }] }` |
+| `POST` | `/api/definitions` | `{ terms }` → definitions per term |
+| `POST` | `/api/translate` | `{ text, target_lang }` → translated text |
+| `POST` | `/api/quiz-one` | `{ text, terms }` → generated quiz questions |
 
-Example: `OLLAMA_MODEL=mistral ollama pull mistral` then run the backend.
+Request/response shapes are defined in **`backend/schemas.py`**.
 
-## Eval (saved API responses)
+### Example: extract
 
-With the backend up, batch-run fixture texts and save JSON for manual review (prompt/model comparison):
-
-```bash
-make eval
-# or: python eval/run_eval.py
-```
-
-Fixtures: `eval/json/cases.json`. Outputs: `eval/runs/<timestamp>/` (gitignored). See [`eval/README.md`](eval/README.md).
-
-## Implementation (high level)
-
-1. Build a system + user prompt with the exact text and requested CEFR level.
-2. `POST` to Ollama `/api/chat` with `format: json`.
-3. Parse assistant `content` as JSON and validate with `ExtractResponse` (`backend/schemas.py`).
-
-The frontend renders vocabulary cards from `vocabulary[]`.
-
-## API contract: `POST /api/extract`
-
-### Request
+**Request**
 
 ```json
-{ "text": "The quick brown fox...", "level": "B1" }
+{ "text": "The quick brown fox...", "level": "Beginner" }
 ```
 
-### Response shape
+**Response**
 
 ```json
-{
-  "vocabulary": [{ "term": "however" }, { "term": "vacation" }]
-}
+{ "vocabulary": [{ "term": "however" }, { "term": "vacation" }] }
 ```
 
-If Ollama is down or the model returns invalid JSON, the API responds with `503` or `502` and an error `detail`.
+`level` must be one of: `"Beginner"`, `"Intermediary"`, `"Advanced"`.
 
-Types live in `backend/schemas.py`.
+## Frontend layout (high level)
+
+- **`frontend/src/app/features/`** — Route groups: `input/`, `vocabulary/`, `quiz/`, `review/`, `final-quiz/` (pages + step-specific UI).
+- **`frontend/src/app/components/`** — Shared UI: `ScanStepHeader`, `ScanStepNav`, `QuizPanel`.
+- **`frontend/src/app/helpers/`** — Session helpers, routes, quiz copy, etc.
+- **`frontend/src/app/types/`** — Shared TypeScript types.
+
+Root **`frontend/src/app/page.tsx`** re-exports the first step from `features/input/`.
+
+## Implementation notes
+
+1. **Extract**: builds a prompt with the user text and level, calls Gemini, parses JSON into `ExtractResponse`, validates with Pydantic.
+2. **Quiz one**: Gemini generates questions tied to the passage and selected terms.
+3. **Frontend session**: stored under `sessionStorage` key `cefr-workflow-session` (see `frontend/src/app/helpers/workflowSession.ts`).
 
 ## Key files
 
-- `backend/main.py`, `backend/llm_extract.py`, `backend/schemas.py`
-- `frontend/src/app/page.tsx`
-- `Makefile`
-- `eval/run_eval.py`, `eval/json/cases.json`
+| Area | Files |
+| --- | --- |
+| API | `backend/main.py`, `backend/schemas.py`, `backend/llm_extract.py`, `backend/llm_quiz.py` |
+| Frontend entry | `frontend/src/app/page.tsx`, `frontend/src/app/layout.tsx`, `frontend/src/app/globals.css` |
+| Rewrites | `frontend/next.config.js` |
+| Automation | `Makefile` |
