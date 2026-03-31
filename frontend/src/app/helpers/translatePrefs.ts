@@ -1,4 +1,6 @@
-export type TranslateLang = "fr" | "pt" | "de" | "es";
+import type { TranslateLang } from "@/app/types/translate";
+
+export type { TranslateLang } from "@/app/types/translate";
 
 export const TRANSLATE_LANG_STORAGE_KEY = "cefr-scan-translate-lang";
 
