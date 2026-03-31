@@ -30,7 +30,7 @@ const PHASE_TITLES: Record<Phase, string> = {
   5: "Phase 5 - Final quiz",
 };
 
-const QUIZ_QUESTIONS: QuizQuestion[] = [
+const QUIZ_TWO_QUESTIONS: QuizQuestion[] = [
   {
     prompt: "Which option is a noun?",
     options: ["quickly", "happiness", "under", "because"],
@@ -117,6 +117,7 @@ function QuizBlock({
   title,
   showText,
   text,
+  questions,
   quizState,
   onChoose,
   onSkip,
@@ -125,24 +126,34 @@ function QuizBlock({
   title: string;
   showText: boolean;
   text: string;
+  questions: QuizQuestion[];
   quizState: QuizState;
   onChoose: (index: number) => void;
   onSkip: () => void;
   onNext: () => void;
 }) {
-  const done = quizState.index >= QUIZ_QUESTIONS.length;
+  const done = quizState.index >= questions.length;
+
+  if (!questions.length) {
+    return (
+      <section className="panel scan-pane">
+        <h2 className="pane-heading">{title}</h2>
+        <p className="muted">No questions available.</p>
+      </section>
+    );
+  }
 
   if (done) {
     return (
       <section className="panel scan-pane">
         <h2 className="pane-heading">{title}</h2>
-        <p className="quiz-score">Score: {quizState.score}/{QUIZ_QUESTIONS.length}</p>
+        <p className="quiz-score">Score: {quizState.score}/{questions.length}</p>
         <p className="muted">Quiz complete.</p>
       </section>
     );
   }
 
-  const q = QUIZ_QUESTIONS[quizState.index];
+  const q = questions[quizState.index];
 
   return (
     <div className="scan-split">
@@ -158,10 +169,10 @@ function QuizBlock({
       <section className="panel scan-pane">
         <h2 className="pane-heading">{title}</h2>
         <p className="quiz-score">
-          Score: {quizState.score}/{QUIZ_QUESTIONS.length}
+          Score: {quizState.score}/{questions.length}
         </p>
         <p className="quiz-progress">
-          Question {quizState.index + 1}/{QUIZ_QUESTIONS.length}
+          Question {quizState.index + 1}/{questions.length}
         </p>
 
         <p className="quiz-prompt">{q.prompt}</p>
@@ -197,7 +208,7 @@ function QuizBlock({
           )}
           {quizState.answered && (
             <button type="button" className="button" onClick={onNext}>
-              {quizState.index === QUIZ_QUESTIONS.length - 1 ? "Finish quiz" : "Next question"}
+              {quizState.index === questions.length - 1 ? "Finish quiz" : "Next question"}
             </button>
           )}
         </div>
@@ -230,6 +241,9 @@ export default function Home() {
 
   const [quizOne, setQuizOne] = useState<QuizState>(initialQuizState);
   const [quizTwo, setQuizTwo] = useState<QuizState>(initialQuizState);
+  const [quizOneQuestions, setQuizOneQuestions] = useState<QuizQuestion[]>([]);
+  const [quizOneStatus, setQuizOneStatus] = useState("");
+  const [isGeneratingQuizOne, setIsGeneratingQuizOne] = useState(false);
 
   useEffect(() => {
     try {
@@ -295,6 +309,8 @@ export default function Home() {
       setTransError({});
       setQuizOne(initialQuizState);
       setQuizTwo(initialQuizState);
+      setQuizOneQuestions([]);
+      setQuizOneStatus("");
 
       setScanStatus("");
       setPhase(2);
@@ -394,11 +410,57 @@ export default function Home() {
     return () => ac.abort();
   }, [phase, vocabulary]);
 
+  const generateQuizOne = useCallback(async () => {
+    if (!text.trim()) return;
+    if (vocabulary.length < 4) {
+      setQuizOneQuestions([]);
+      setQuizOneStatus("Select at least 4 vocabulary words to generate Quiz 1.");
+      return;
+    }
+
+    setIsGeneratingQuizOne(true);
+    setQuizOneStatus("Generating quiz...");
+    setQuizOne(initialQuizState);
+
+    try {
+      const resp = await fetch(`${apiBase}/api/quiz-one`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ text, terms: vocabulary }),
+      });
+
+      if (!resp.ok) {
+        const msg = await resp.text().catch(() => resp.statusText);
+        throw new Error(msg || `HTTP ${resp.status}`);
+      }
+
+      const data = (await resp.json()) as { questions?: QuizQuestion[] };
+      const questions = Array.isArray(data.questions) ? data.questions : [];
+      if (!questions.length) {
+        throw new Error("No quiz questions were returned.");
+      }
+
+      setQuizOneQuestions(questions);
+      setQuizOneStatus("");
+    } catch (e) {
+      setQuizOneQuestions([]);
+      setQuizOneStatus(e instanceof Error ? `Quiz generation failed: ${e.message}` : "Quiz generation failed.");
+    } finally {
+      setIsGeneratingQuizOne(false);
+    }
+  }, [text, vocabulary]);
+
+  useEffect(() => {
+    if (phase !== 3) return;
+    void generateQuizOne();
+  }, [phase, generateQuizOne]);
+
   const answerQuiz = useCallback((which: "first" | "second", selectedIndex: number) => {
     const setter = which === "first" ? setQuizOne : setQuizTwo;
+    const questions = which === "first" ? quizOneQuestions : QUIZ_TWO_QUESTIONS;
     setter((prev) => {
-      if (prev.answered || prev.index >= QUIZ_QUESTIONS.length) return prev;
-      const q = QUIZ_QUESTIONS[prev.index];
+      if (prev.answered || prev.index >= questions.length) return prev;
+      const q = questions[prev.index];
       const correct = selectedIndex === q.answerIndex;
       return {
         ...prev,
@@ -407,24 +469,26 @@ export default function Home() {
         score: correct ? prev.score + 1 : prev.score,
       };
     });
-  }, []);
+  }, [quizOneQuestions]);
 
   const skipQuiz = useCallback((which: "first" | "second") => {
     const setter = which === "first" ? setQuizOne : setQuizTwo;
+    const questions = which === "first" ? quizOneQuestions : QUIZ_TWO_QUESTIONS;
     setter((prev) => {
-      if (prev.answered || prev.index >= QUIZ_QUESTIONS.length) return prev;
+      if (prev.answered || prev.index >= questions.length) return prev;
       return {
         ...prev,
         answered: true,
         selectedIndex: null,
       };
     });
-  }, []);
+  }, [quizOneQuestions]);
 
   const nextQuiz = useCallback((which: "first" | "second") => {
     const setter = which === "first" ? setQuizOne : setQuizTwo;
+    const questions = which === "first" ? quizOneQuestions : QUIZ_TWO_QUESTIONS;
     setter((prev) => {
-      if (prev.index >= QUIZ_QUESTIONS.length) return prev;
+      if (prev.index >= questions.length) return prev;
       const nextIndex = prev.index + 1;
       return {
         ...prev,
@@ -433,10 +497,10 @@ export default function Home() {
         selectedIndex: null,
       };
     });
-  }, []);
+  }, [quizOneQuestions]);
 
-  const canAdvanceTo3 = vocabulary.length > 0;
-  const canAdvanceTo4 = quizOne.index >= QUIZ_QUESTIONS.length;
+  const canAdvanceTo3 = vocabulary.length >= 4;
+  const canAdvanceTo4 = quizOneQuestions.length > 0 && quizOne.index >= quizOneQuestions.length;
   const canAdvanceTo5 = true;
 
   const canAdvancePhase =
@@ -459,6 +523,9 @@ export default function Home() {
     setIsScanning(false);
     setQuizOne(initialQuizState);
     setQuizTwo(initialQuizState);
+    setQuizOneQuestions([]);
+    setQuizOneStatus("");
+    setIsGeneratingQuizOne(false);
   };
 
   return (
@@ -549,6 +616,9 @@ export default function Home() {
             <p className="hint pane-hint">
               Add words by clicking the text or manually typing one below. Remove words you already know.
             </p>
+            {vocabulary.length < 4 && (
+              <p className="hint pane-hint">You need at least 4 selected words to start Quiz 1.</p>
+            )}
 
             <div className="inline-add">
               <input
@@ -588,15 +658,41 @@ export default function Home() {
       )}
 
       {phase === 3 && (
-        <QuizBlock
-          title="Phase 3: Initial quiz"
-          showText={true}
-          text={text}
-          quizState={quizOne}
-          onChoose={(idx) => answerQuiz("first", idx)}
-          onSkip={() => skipQuiz("first")}
-          onNext={() => nextQuiz("first")}
-        />
+        <>
+          {isGeneratingQuizOne && (
+            <section className="panel scan-pane">
+              <h2 className="pane-heading">Phase 3: Initial quiz</h2>
+              <p className="muted">Generating quiz...</p>
+            </section>
+          )}
+
+          {!isGeneratingQuizOne && quizOneStatus && (
+            <section className="panel scan-pane">
+              <h2 className="pane-heading">Phase 3: Initial quiz</h2>
+              <p className="def-status def-error" role="alert">
+                {quizOneStatus}
+              </p>
+              <div className="flow-actions">
+                <button type="button" className="button" onClick={() => void generateQuizOne()}>
+                  Retry quiz generation
+                </button>
+              </div>
+            </section>
+          )}
+
+          {!isGeneratingQuizOne && !quizOneStatus && quizOneQuestions.length > 0 && (
+            <QuizBlock
+              title="Phase 3: Initial quiz"
+              showText={true}
+              text={text}
+              questions={quizOneQuestions}
+              quizState={quizOne}
+              onChoose={(idx) => answerQuiz("first", idx)}
+              onSkip={() => skipQuiz("first")}
+              onNext={() => nextQuiz("first")}
+            />
+          )}
+        </>
       )}
 
       {phase === 4 && (
@@ -702,6 +798,7 @@ export default function Home() {
           title="Phase 5: Final quiz"
           showText={false}
           text={text}
+          questions={QUIZ_TWO_QUESTIONS}
           quizState={quizTwo}
           onChoose={(idx) => answerQuiz("second", idx)}
           onSkip={() => skipQuiz("second")}
