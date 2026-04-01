@@ -1,7 +1,7 @@
 import { QuizPanel } from "@/app/components/QuizPanel";
 import type { QuizQuestion, QuizState } from "@/app/types/workflow";
 
-const QUIZ_SECTION_TITLE = "Mixed skills quiz";
+const QUIZ_SECTION_TITLE = "Concept mastery quiz";
 
 type FinalQuizSectionProps = {
   text: string;
@@ -52,7 +52,7 @@ export function FinalQuizSection({
       {!isGeneratingQuizTwo && !quizTwoStatus && quizTwoQuestions.length > 0 && (
         <QuizPanel
           title={QUIZ_SECTION_TITLE}
-          showText={true}
+          showText={false}
           text={text}
           questions={quizTwoQuestions}
           quizState={quizTwo}

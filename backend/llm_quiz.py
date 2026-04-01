@@ -1,11 +1,12 @@
 from __future__ import annotations
 
 import json
+import random
 import re
 from typing import Any
 
 from .llm_extract import call_gemini_generate
-from .schemas import QuizOneRequest, QuizOneResponse
+from .schemas import QuizOneQuestion, QuizOneRequest, QuizOneResponse
 
 _JSON_FENCE_RE = re.compile(r"```(?:json)?\s*([\s\S]*?)```", re.IGNORECASE)
 
@@ -87,6 +88,24 @@ Generate one question per term and respond with JSON only."""
     return system, user
 
 
+def _randomize_options(question: QuizOneQuestion) -> QuizOneQuestion:
+    correct = question.options[question.answerIndex]
+    distractors = [opt for idx, opt in enumerate(question.options) if idx != question.answerIndex]
+    random.shuffle(distractors)
+
+    correct_idx = random.randrange(4)
+    new_options: list[str] = []
+    d_idx = 0
+    for i in range(4):
+        if i == correct_idx:
+            new_options.append(correct)
+        else:
+            new_options.append(distractors[d_idx])
+            d_idx += 1
+
+    return question.model_copy(update={"options": new_options, "answerIndex": correct_idx})
+
+
 def generate_quiz_one(req: QuizOneRequest) -> QuizOneResponse:
     if len(req.terms) < 4:
         raise ValueError("At least 4 selected terms are required to build 4-option questions")
@@ -116,4 +135,5 @@ def generate_quiz_one(req: QuizOneRequest) -> QuizOneResponse:
                 f"Question {idx + 1} does not use the target term as the correct answer"
             )
 
-    return parsed
+    randomized_questions = [_randomize_options(q) for q in parsed.questions]
+    return QuizOneResponse(questions=randomized_questions)

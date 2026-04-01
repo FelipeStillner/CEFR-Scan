@@ -1,46 +1,126 @@
 from __future__ import annotations
 
 import json
+import random
+import re
 from typing import Any
 
 from .llm_extract import call_gemini_generate
 from .llm_quiz import _parse_json_object
-from .schemas import QuizTwoRequest, QuizTwoResponse
+from .schemas import QuizOneQuestion, QuizTwoRequest, QuizTwoResponse
 
-QUIZ_TWO_COMPREHENSION = 4
-QUIZ_TWO_VOCAB = 4
-QUIZ_TWO_TOTAL = QUIZ_TWO_COMPREHENSION + QUIZ_TWO_VOCAB
+QUIZ_TWO_MIN_PER_TERM = 2
+QUIZ_TWO_MAX_PER_TERM = 4
+QUIZ_TWO_TARGET_AVERAGE = 3.0
 
 
-def _build_prompt(req: QuizTwoRequest) -> tuple[str, str]:
+def _question_counts_per_term(num_terms: int) -> list[int]:
+    """Build per-term counts in [2, 4] with an average close to 3."""
+    target_total = round(num_terms * QUIZ_TWO_TARGET_AVERAGE)
+    counts = [3] * num_terms
+
+    while sum(counts) < target_total:
+        idx = random.randrange(num_terms)
+        if counts[idx] < QUIZ_TWO_MAX_PER_TERM:
+            counts[idx] += 1
+
+    while sum(counts) > target_total:
+        idx = random.randrange(num_terms)
+        if counts[idx] > QUIZ_TWO_MIN_PER_TERM:
+            counts[idx] -= 1
+
+    # Add slight variation while preserving total and bounds.
+    for _ in range(max(1, num_terms)):
+        i = random.randrange(num_terms)
+        j = random.randrange(num_terms)
+        if i == j:
+            continue
+        if counts[i] < QUIZ_TWO_MAX_PER_TERM and counts[j] > QUIZ_TWO_MIN_PER_TERM and random.random() < 0.35:
+            counts[i] += 1
+            counts[j] -= 1
+
+    return counts
+
+
+def _base_form(term: str) -> str:
+    return re.sub(r"[^a-z]", "", term.casefold())
+
+
+def _is_inflected_or_derived(term: str, candidate: str) -> bool:
+    t = _base_form(term)
+    c = _base_form(candidate)
+    if not t or not c:
+        return False
+    if c == t:
+        return True
+    if len(t) >= 4 and (c.startswith(t) or t.startswith(c)):
+        return True
+    return False
+
+
+def _randomize_options(question: QuizOneQuestion) -> QuizOneQuestion:
+    correct = question.options[question.answerIndex]
+    distractors = [opt for idx, opt in enumerate(question.options) if idx != question.answerIndex]
+    random.shuffle(distractors)
+
+    correct_idx = random.randrange(4)
+    new_options: list[str] = []
+    d_idx = 0
+    for i in range(4):
+        if i == correct_idx:
+            new_options.append(correct)
+        else:
+            new_options.append(distractors[d_idx])
+            d_idx += 1
+
+    return question.model_copy(update={"options": new_options, "answerIndex": correct_idx})
+
+
+def _build_prompt(req: QuizTwoRequest) -> tuple[str, str, list[int]]:
     terms_json = json.dumps(req.terms, ensure_ascii=True)
-    first_four = req.terms[:QUIZ_TWO_VOCAB]
-    first_four_json = json.dumps(first_four, ensure_ascii=True)
+    counts = _question_counts_per_term(len(req.terms))
+    total_questions = sum(counts)
+    plan_rows = [
+        {"term": term, "questions": count}
+        for term, count in zip(req.terms, counts)
+    ]
+    plan_json = json.dumps(plan_rows, ensure_ascii=True)
     level = req.level
 
     system = f"""You are an English learning assistant.
 
 The learner's level is: {level}.
 
-Goal: create a **final** multiple-choice quiz that is **noticeably harder** than a basic vocabulary-in-context quiz.
-Use more demanding wording, subtler distractors, and questions that require careful reading.
+Goal: create a final multiple-choice quiz focused on concept mastery of vocabulary, harder than quiz one.
 
-The quiz has exactly {QUIZ_TWO_TOTAL} questions in this fixed order:
+Hardness requirements:
+- Use more abstract or nuanced contexts than basic drills.
+- Use subtle semantic distractors (close meanings, common confusion pairs).
+- Prompts may be slightly longer when needed, but remain clear.
 
-**Questions 1–{QUIZ_TWO_COMPREHENSION} (reading comprehension):**
-- Test understanding of the ORIGINAL TEXT: main idea, important details, implied meaning, or the author’s purpose.
-- Do NOT ask about grammar labels (e.g. “which is a noun”).
-- Each question must have exactly 4 options in English; distractors must be plausible but only one is fully correct.
-- Options are free-form phrases or short sentences (not limited to the vocabulary list).
+Content requirements:
+- NO reading comprehension questions about the original text.
+- The source text will not be visible to the learner during this quiz.
+- Create questions only to validate learned vocabulary concepts.
 
-**Questions {QUIZ_TWO_COMPREHENSION + 1}–{QUIZ_TWO_TOTAL} (vocabulary — harder than a simple quiz):**
-- Exactly one question per term, in the SAME ORDER as this list (first term → question {QUIZ_TWO_COMPREHENSION + 1}, etc.):
-  {first_four_json}
-- Use a short sentence with ONE blank (or a paraphrase task) where the correct answer is that target term.
-- Place each concept in a **new** context that is more nuanced or abstract than typical beginner drills.
-- Every option must be taken **only** from the full vocabulary list below (same rule as a strict classroom quiz).
-- Each question must have exactly 4 **unique** options from that list.
-- `answerIndex` is the 0-based index of the correct option.
+Question-count plan:
+- Use this exact per-term plan in this exact order (do not reorder terms):
+{plan_json}
+- Total questions must be exactly: {total_questions}
+
+Format requirements (for every question):
+- Questions must be in English.
+- Use a mix of:
+  1) harder blank-in-context questions,
+  2) definition/paraphrase questions.
+- Exactly 4 unique options.
+- `answerIndex` is 0-based.
+
+Answer rules:
+- For each term block, keep a 50/50 mix as close as possible between:
+  1) target-answer questions: correct option is the target term (or an inflected/derived form),
+  2) paraphrase-answer questions: correct option is an English synonym/paraphrase phrase or sentence.
+- Options may come from outside the selected vocabulary list.
 
 Return strict JSON only:
 {{
@@ -53,53 +133,54 @@ Return strict JSON only:
   ]
 }}
 
-Return exactly {QUIZ_TWO_TOTAL} questions in order. Do not add extra keys."""
+Return exactly {total_questions} questions in order. Do not add extra keys."""
 
     user = f"""Original text:
 ---
 {req.text}
 ---
 
-Full vocabulary list (only source of options for questions {QUIZ_TWO_COMPREHENSION + 1}–{QUIZ_TWO_TOTAL}):
+Selected vocabulary list:
 {terms_json}
 
 Respond with JSON only."""
 
-    return system, user
+    return system, user, counts
 
 
 def generate_quiz_two(req: QuizTwoRequest) -> QuizTwoResponse:
-    if len(req.terms) < QUIZ_TWO_VOCAB:
-        raise ValueError(f"At least {QUIZ_TWO_VOCAB} selected terms are required for the final quiz")
+    if len(req.terms) < 4:
+        raise ValueError("At least 4 selected terms are required for the final quiz")
 
-    system, user = _build_prompt(req)
+    system, user, counts = _build_prompt(req)
+    expected_total = sum(counts)
     raw = call_gemini_generate(system, user)
     data: dict[str, Any] = _parse_json_object(raw)
     parsed = QuizTwoResponse.model_validate(data)
 
-    if len(parsed.questions) != QUIZ_TWO_TOTAL:
-        raise ValueError(f"Quiz generator must return exactly {QUIZ_TWO_TOTAL} questions")
+    if len(parsed.questions) != expected_total:
+        raise ValueError(f"Quiz generator must return exactly {expected_total} questions")
 
-    allowed = {t.casefold(): t for t in req.terms}
+    # For each term block, require at least one target-answer style question.
+    offset = 0
+    for term, count in zip(req.terms, counts):
+        block = parsed.questions[offset : offset + count]
+        offset += count
+
+        if not block:
+            raise ValueError("Quiz generator produced an empty term block")
+
+        if not any(_is_inflected_or_derived(term, q.options[q.answerIndex]) for q in block):
+            raise ValueError(
+                "Quiz generator did not include any target-answer question "
+                f"for term '{term}'"
+            )
 
     for idx, q in enumerate(parsed.questions):
         if len(set(o.casefold() for o in q.options)) != 4:
             raise ValueError(f"Question {idx + 1} does not contain 4 unique options")
 
-        if idx < QUIZ_TWO_COMPREHENSION:
-            continue
+    randomized_questions = [_randomize_options(q) for q in parsed.questions]
+    random.shuffle(randomized_questions)
 
-        vocab_idx = idx - QUIZ_TWO_COMPREHENSION
-        target = req.terms[vocab_idx]
-        for opt in q.options:
-            if opt.casefold() not in allowed:
-                raise ValueError(
-                    f"Question {idx + 1} contains option not in selected vocabulary: {opt}"
-                )
-        correct = q.options[q.answerIndex]
-        if correct.casefold() != target.casefold():
-            raise ValueError(
-                f"Question {idx + 1} does not use the target term as the correct answer"
-            )
-
-    return parsed
+    return QuizTwoResponse(questions=randomized_questions)
