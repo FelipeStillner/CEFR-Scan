@@ -6,5 +6,6 @@ export const scanPhaseTitles: Record<Phase, string> = {
   2: "Build your word list from the scan",
   3: "Check your understanding of the words",
   4: "Read definitions and optional translations",
-  5: "Short quiz on general English",
+  5: "Validate your vocabulary mastery",
+  6: "Review your full session results",
 };

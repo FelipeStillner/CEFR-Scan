@@ -5,4 +5,5 @@ export const scanRoutes = {
   quiz: "/quiz",
   review: "/review",
   finalQuiz: "/final-quiz",
+  results: "/results",
 } as const;

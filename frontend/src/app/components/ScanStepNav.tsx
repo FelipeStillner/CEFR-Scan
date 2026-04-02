@@ -18,6 +18,8 @@ export function ScanStepNav({ phase, showNext = true, canGoNext = true }: ScanSt
           ? scanRoutes.quiz
           : phase === 5
             ? scanRoutes.review
+            : phase === 6
+              ? scanRoutes.finalQuiz
             : null;
 
   const nextHref =
@@ -27,6 +29,8 @@ export function ScanStepNav({ phase, showNext = true, canGoNext = true }: ScanSt
         ? scanRoutes.review
         : phase === 4
           ? scanRoutes.finalQuiz
+          : phase === 5
+            ? scanRoutes.results
           : null;
 
   return (

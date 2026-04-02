@@ -18,6 +18,7 @@ export function ScanStepHeader({ phase, onReset }: ScanStepHeaderProps) {
           <li className={phase >= 3 ? "active" : ""}>3 · Quiz A</li>
           <li className={phase >= 4 ? "active" : ""}>4 · Review</li>
           <li className={phase >= 5 ? "active" : ""}>5 · Quiz B</li>
+          <li className={phase >= 6 ? "active" : ""}>6 · Results</li>
         </ol>
       </div>
       <div className="scan-header-actions">

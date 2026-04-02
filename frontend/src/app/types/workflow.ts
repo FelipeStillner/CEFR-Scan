@@ -1,4 +1,4 @@
-export type Phase = 1 | 2 | 3 | 4 | 5;
+export type Phase = 1 | 2 | 3 | 4 | 5 | 6;
 
 export type QuizQuestion = {
   prompt: string;
