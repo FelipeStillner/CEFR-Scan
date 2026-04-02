@@ -136,4 +136,5 @@ def generate_quiz_one(req: QuizOneRequest) -> QuizOneResponse:
             )
 
     randomized_questions = [_randomize_options(q) for q in parsed.questions]
+    random.shuffle(randomized_questions)
     return QuizOneResponse(questions=randomized_questions)
