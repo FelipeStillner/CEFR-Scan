@@ -1,4 +1,4 @@
-# CEFR Scan
+# Scan & Study
 
 A small full-stack app for **English learners**: paste a text, choose a proficiency band (**Beginner**, **Intermediary**, or **Advanced**), and get suggested vocabulary to study. You then edit a word list, take a **text-based vocabulary quiz**, review **definitions** and optional **translations**, and finish with a **generated mixed-skills final quiz** (passage + vocabulary).
 
@@ -121,7 +121,7 @@ Root **`frontend/src/app/page.tsx`** re-exports the first step from `features/in
 1. **Extract**: builds a prompt with the user text and level, calls Gemini, parses JSON into `ExtractResponse`, validates with Pydantic.
 2. **Quiz one**: Gemini generates vocabulary-in-context questions tied to the passage and selected terms.
 3. **Quiz two (final)**: Gemini returns eight questions—four on the passage (main idea, detail, inference) and four harder vocabulary items aligned with the first four selected terms (options drawn from the full word list).
-4. **Frontend session**: stored under `sessionStorage` key `cefr-workflow-session` (see `frontend/src/app/helpers/workflowSession.ts`).
+4. **Frontend session**: stored under `sessionStorage` key `scan-study-workflow-session` (see `frontend/src/app/helpers/workflowSession.ts`).
 
 ## Key files
 

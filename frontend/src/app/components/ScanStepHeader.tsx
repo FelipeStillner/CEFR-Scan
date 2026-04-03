@@ -10,7 +10,7 @@ export function ScanStepHeader({ phase, onReset }: ScanStepHeaderProps) {
   return (
     <header className="scan-header">
       <div className="scan-header-main">
-        <h1 className="scan-title">CEFR Scan</h1>
+        <h1 className="scan-title">Scan & Study</h1>
         <p className="subtitle">{scanPhaseTitles[phase]}</p>
         <ol className="phase-tracker" aria-label="Steps">
           <li className={phase >= 1 ? "active" : ""}>1 · Text</li>

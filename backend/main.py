@@ -25,7 +25,7 @@ from .schemas import (
 )
 from .translation_mymemory import translate_via_mymemory
 
-app = FastAPI(title="CEFR-Scan API")
+app = FastAPI(title="Scan & Study API")
 
 app.add_middleware(
     CORSMiddleware,

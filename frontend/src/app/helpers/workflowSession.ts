@@ -1,7 +1,7 @@
 import type { EnglishLevel } from "@/app/types/englishLevel";
 import type { QuizQuestion, QuizState } from "@/app/types/workflow";
 
-export const WORKFLOW_STORAGE_KEY = "cefr-workflow-session";
+export const WORKFLOW_STORAGE_KEY = "scan-study-workflow-session";
 
 export type WorkflowSession = {
   text: string;

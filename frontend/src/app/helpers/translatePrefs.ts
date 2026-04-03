@@ -2,7 +2,7 @@ import type { TranslateLang } from "@/app/types/translate";
 
 export type { TranslateLang } from "@/app/types/translate";
 
-export const TRANSLATE_LANG_STORAGE_KEY = "cefr-scan-translate-lang";
+export const TRANSLATE_LANG_STORAGE_KEY = "scan-study-translate-lang";
 
 export const TRANSLATE_LANG_OPTIONS: { value: TranslateLang; label: string }[] = [
   { value: "fr", label: "French" },

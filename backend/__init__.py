@@ -1,1 +1,1 @@
-"""CEFR-Scan backend package."""
+"""Scan & Study backend package."""

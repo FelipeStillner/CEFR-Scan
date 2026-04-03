@@ -15,7 +15,7 @@ const fontSerif = Source_Serif_4({
 });
 
 export const metadata: Metadata = {
-  title: "CEFR Scan",
+  title: "Scan & Study",
   description:
     "Paste English text, pick a level, highlight vocabulary to study, then review definitions and take two short quizzes.",
 };
